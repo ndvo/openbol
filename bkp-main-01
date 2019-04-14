@@ -1,0 +1,183 @@
+import kivy
+kivy.require('1.8.0')
+from kivy.app import App
+from kivy.uix.widget import Widget
+from kivy.config import Config
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.image import Image
+from kivy.uix.label import Label
+from kivy.uix.scatter import Scatter
+from kivy.graphics import *
+from kivy.uix.behaviors import *
+from math import sqrt
+from kivy.clock import Clock
+
+import g
+
+class job:
+	def __init__(self, position):
+		self.is_taken = False
+		self.position = position
+
+class player_pin(Scatter):
+	def __init__(self,status_game = 'win',status_health = 'healthy', job = 'st',position = (0,0)):
+		#Scatter.__init__(self)
+
+		super(player_pin, self).__init__()#**kwargs)
+
+
+		self.status_game = status_game
+		self.status_health = status_health
+		self.job = 'st'
+		self.do_rotation = False
+		self.do_scale = False
+		self.size_hint = (None,None)
+		self.size = (36,36)
+		self.pos = position[0]+180-18,position[1]+320-18
+		#self.bind(on_touch_up = self.on_release)
+		
+		self.reload_image()
+
+
+	def reload_image(self):
+		new_image = Image(source='./data/images/player-'+self.status_game+'-'+self.status_health+'.png')
+		new_image.pos = (0,0)
+		new_image.size = (36,36)
+		self.add_widget(new_image)
+		print 'events', self.events()
+
+
+	def on_release(self):#,arg1,arg2):
+		pos_pin = self.pos[:]
+
+		closest_distance = 1000
+		chosen_position = 'none'
+
+		pos_list = [(-22,250), (22,250), (-86,230), (-42,208), (0,208), (42,208), (86,230), (0,140), (-108,119), (-66,100), (-22,100), (22,100), (66,100), (108,119), (-22,57), (22,57), (-108,5), (-66,-18), (-22,-18), (22,-18), (66,-18), (108,5), (0,-60)]
+
+		"""
+		i = 0
+		for position in pos_list:
+
+			i+=1
+			print 'count loop',i
+			corrected_position = [position[0]+180-18, position[1] + 320-18]
+			distance = sqrt( (corrected_position[0]-pos_pin[0])**2 + (corrected_position[1]-pos_pin[1])**2 )
+			if distance < closest_distance:
+			
+				chosen_position = corrected_position
+				closest_distance = distance
+
+		self.pos = chosen_position
+		
+		"""
+		chosen_job = 'none'
+
+		i = 0
+
+		for job in g.job_list:
+			#print 'job pos',job.position
+			i+=1
+			print 'count loop',i
+			corrected_position = [job.position[0]+180-18, job.position[1] + 320-18]
+			distance = sqrt( (corrected_position[0]-pos_pin[0])**2 + (corrected_position[1]-pos_pin[1])**2 )
+			if distance < closest_distance:
+				if job.is_taken == False:
+			
+					job.is_taken = True
+					chosen_job = job
+					chosen_position = corrected_position
+					closest_distance = distance
+
+		print 'chosen job',chosen_job
+		self.pos = chosen_position
+		
+
+
+		
+		
+		
+		
+class layout_main(FloatLayout):
+	def __init__(self,**kwargs):
+		super(layout_main,self).__init__(**kwargs)
+
+		img_soccer_pitch = Image(source='./data/images/background-field.png')
+		self.add_widget(img_soccer_pitch)
+
+		img_bottom_bar = Image(source='./data/images/interface-lowpanel-plain.png', pos=(0, -260))
+		self.add_widget(img_bottom_bar)
+
+		with self.canvas: Rectangle(pos=(0, 120), size=(360, 3))
+
+		img_mid_bar = Image(source='./data/images/interface-midpanel-logo.png',pos=(0, 0-147))
+		self.add_widget(img_mid_bar)
+
+		with self.canvas: Rectangle(pos=(0, 223), size=(360, 12))
+
+		white_bar_label = Label(text='THESE ACTIONS ARE CURRENTLY AVAILABLE TO YOU', color = (0.67,0.67,0.67,1), font_size = 10, pos= (-100,-92), font_name = './data/fonts/H.H. Samuel-font-defharo.ttf')
+		self.add_widget(white_bar_label)
+
+		self.create_position_buttons()
+
+
+		initial_positions = [(-22,250), (22,250), (-86,230), (-42,208), (0,208), (42,208), (86,230), (0,140), (-108,119), (-66,100)]
+
+		for pos in initial_positions:
+			self.add_widget(player_pin(position=pos))
+
+
+
+	def create_position_buttons(self):
+		btn_list = ['st','st','lw','fw','fw','fw','rw', 'am','lf','cm','cm','cm','cm','rf','hm','hm', 'lb','cb','cb','cb','cb','rb','sw']
+		pos_list = [(-22,250), (22,250), (-86,230), (-42,208), (0,208), (42,208), (86,230), (0,140), (-108,119), (-66,100), (-22,100), (22,100), (66,100), (108,119), (-22,57), (22,57), (-108,5), (-66,-18), (-22,-18), (22,-18), (66,-18), (108,5), (0,-60)]
+
+		count = 0
+		for item in btn_list:
+			self.add_widget(Image(source='./data/images/position-'+item+'.png', pos = pos_list[count]))			
+			count += 1
+
+		for position in pos_list:
+			g.job_list.append(job(position))
+
+
+
+
+class oleApp(App):
+	"""This is the main class. It sets basic parameters when initializing, and calls the main layout."""
+#	icon='logo.png'
+#	title='AtT Tournament'
+
+	def build(self):
+		"""Setting initial parameters and calls for creation of main layout."""
+#		g.current_phase = 'main'
+#		g.player_list =[]
+#		g.selected_players = []
+#		g.pairing = []
+#		g.player_buttons = []
+#		g.active_popup = None
+#		g.current_round = 0
+#		Clock.max_iteration = 100
+
+		return layout_main()
+
+	def on_pause(self):
+		return True
+
+	def on_resume(self):
+		pass
+
+
+thisApp = None
+
+if __name__ == '__android__':
+	thisApp = oleApp()
+	thisApp.run()
+elif __name__ == '__main__':
+	Config.set('graphics','width',360)
+	Config.set('graphics','height',640)
+	Config.set('graphics','resizable',0)
+	Config.write()
+	thisApp = oleApp()
+	thisApp.run()
